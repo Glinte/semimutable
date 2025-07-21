@@ -59,18 +59,6 @@ __all__ += ["frozen_field", "FrozenField", "freeze_fields", "FrozenFieldPlacehol
 FROZEN_PREFIX: Final = "_frozen_"
 
 
-# https://stackoverflow.com/questions/74714300/paramspec-for-a-pre-defined-function-without-using-generic-callablep
-# Note: This is actually less accurate of a typing than Callable[P, T], but see
-# https://github.com/microsoft/pyright/discussions/10727, pyright could not resolve overloads properly
-def signature_from[Fn: Callable](_original: Fn) -> Callable[[Fn], Fn]:
-    """Copies the signature of a function to another function."""
-
-    def _decorator(func: Fn) -> Fn:
-        return func
-
-    return _decorator
-
-
 class FrozenField[T]:
     """A descriptor that makes an attribute immutable after it has been set."""
 
@@ -121,11 +109,75 @@ class FrozenFieldPlaceholder:
         raise error
 
 
-@signature_from(field)
-def frozen_field(**kwargs: Any) -> Any:
-    """A field that is immutable after it has been set. See `dataclasses.field` for more information."""
-    metadata = kwargs.pop("metadata", {}) | {"frozen": True}
-    return FrozenFieldPlaceholder(**kwargs, metadata=metadata)
+@overload
+def frozen_field[_T](
+    *,
+    default: _T,
+    default_factory: type[MISSING] = MISSING,
+    init: bool = True,
+    repr: bool = True,
+    hash: bool | None = None,
+    compare: bool = True,
+    metadata: dict[str, Any] | None = None,
+    kw_only: type[MISSING] = MISSING,
+) -> _T:
+    ...
+
+
+@overload
+def frozen_field[_T](
+    *,
+    default: type[MISSING] = MISSING,
+    default_factory: Callable[[], _T],
+    init: bool = True,
+    repr: bool = True,
+    hash: bool | None = None,
+    compare: bool = True,
+    metadata: dict[str, Any] | None = None,
+    kw_only: type[MISSING] = MISSING,
+) -> _T:
+    ...
+
+
+@overload
+def frozen_field(
+    *,
+    default: type[MISSING] = MISSING,
+    default_factory: type[MISSING] = MISSING,
+    init: bool = True,
+    repr: bool = True,
+    hash: bool | None = None,
+    compare: bool = True,
+    metadata: dict[str, Any] | None = None,
+    kw_only: type[MISSING] = MISSING,
+) -> Any:
+    ...
+
+
+def frozen_field(
+    *,
+    default: Any = MISSING,
+    default_factory: Callable[[], Any] | type[MISSING] = MISSING,
+    init: bool = True,
+    repr: bool = True,
+    hash: bool | None = None,
+    compare: bool = True,
+    metadata: dict[str, Any] | None = None,
+    kw_only: bool | type[MISSING] = MISSING,
+) -> Any:
+    """Like :func:`dataclasses.field` but marks the field as frozen."""
+
+    metadata = (metadata or {}) | {"frozen": True}
+    return FrozenFieldPlaceholder(
+        default=default,
+        default_factory=default_factory,
+        init=init,
+        repr=repr,
+        hash=hash,
+        compare=compare,
+        metadata=metadata,
+        kw_only=kw_only,
+    )
 
 
 def freeze_fields[T](
@@ -309,9 +361,62 @@ def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -
             setattr(cls, name, field(**kwargs))
 
 
+@overload
+def dataclass[_T](
+    cls: type[_T],
+    /,
+    *,
+    init: bool = True,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    match_args: bool = True,
+    kw_only: bool = False,
+    slots: bool = False,
+    weakref_slot: bool = False,
+    classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch",
+) -> type[_T]:
+    ...
+
+
+@overload
+def dataclass[_T](
+    cls: None = None,
+    /,
+    *,
+    init: bool = True,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    match_args: bool = True,
+    kw_only: bool = False,
+    slots: bool = False,
+    weakref_slot: bool = False,
+    classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch",
+) -> Callable[[type[_T]], type[_T]]:
+    ...
+
 @dataclass_transform()
-@signature_from(std_dataclass)
-def dataclass[_T](cls: type[_T] | None = None, /, **kwargs: Any) -> Any:
+def dataclass[_T](
+    cls: type[_T] | None = None,
+    /,
+    *,
+    init: bool = True,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = False,
+    match_args: bool = True,
+    kw_only: bool = False,
+    slots: bool = False,
+    weakref_slot: bool = False,
+    classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch",
+) -> Any:
     """Just like @dataclass, but if you use frozen_field() in the class, it will make that field immutable.
 
     Additional kwargs not supported @dataclass:
@@ -326,15 +431,23 @@ def dataclass[_T](cls: type[_T] | None = None, /, **kwargs: Any) -> Any:
 
     def wrap(cls: type[_T]):
         replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls)
-        classvar_frozen_assignment = kwargs.pop(
-            "classvar_frozen_assignment", "patch"
-        )  # Not supported by dataclass, so we remove it.
         if classvar_frozen_assignment not in ("patch", "replace", "error"):
             raise ValueError(
                 f"Invalid value for classvar_frozen_assignment: {classvar_frozen_assignment}. "
-                "Expected 'patch' or 'replace'."
+                "Expected 'patch', 'replace', or 'error'."
             )
-        klass = std_dataclass(**kwargs)(cls)
+        klass = std_dataclass(
+            init=init,
+            repr=repr,
+            eq=eq,
+            order=order,
+            unsafe_hash=unsafe_hash,
+            frozen=frozen,
+            match_args=match_args,
+            kw_only=kw_only,
+            slots=slots,
+            weakref_slot=weakref_slot,
+        )(cls)
         return freeze_fields(klass, classvar_frozen_assignment=classvar_frozen_assignment)
 
     # See if we're being called as @dataclass or @dataclass().
