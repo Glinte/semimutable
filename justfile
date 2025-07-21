@@ -1,4 +1,5 @@
 #!/usr/bin/env just --justfile
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 export PATH := join(justfile_directory(), ".env", "bin") + ":" + env_var('PATH')
 
 python_dir := if os_family() == "windows" { "./.venv/Scripts" } else { "./.venv/bin" }
