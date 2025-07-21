@@ -28,3 +28,7 @@ def test_non_frozen_field_is_mutable():
     obj.y = 42
     assert obj.y == 42
 ```
+
+## Credits
+
+Parts of this library are derived from Python's standard library `dataclasses` module. The original implementation is distributed under the Python Software Foundation License. See `LICENSE.PSF` for the full license text.
