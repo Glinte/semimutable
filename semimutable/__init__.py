@@ -1,27 +1,40 @@
-from dataclasses import dataclass as std_dataclass
-from dataclasses import field, fields, Field, FrozenInstanceError, InitVar, KW_ONLY, MISSING, asdict, astuple, make_dataclass, replace, is_dataclass
 import itertools
-from typing import Any, Callable, Final, Never, dataclass_transform, overload, Self, override, Literal
+from dataclasses import (
+    KW_ONLY,
+    MISSING,
+    Field,
+    FrozenInstanceError,
+    InitVar,
+    asdict,
+    astuple,
+    field,
+    fields,
+    is_dataclass,
+    make_dataclass,
+    replace,
+)
+from dataclasses import dataclass as std_dataclass
+from typing import Any, Callable, Final, Literal, Never, Self, dataclass_transform, overload, override
 
 __version__ = "0.1.0a0"
 
 # Exact match of dataclasses module's __all__.
-__all__ = ["dataclass",
-           'field',
-           'Field',
-           'FrozenInstanceError',
-           'InitVar',
-           'KW_ONLY',
-           'MISSING',
-
-           # Helper functions.
-           'fields',
-           'asdict',
-           'astuple',
-           'make_dataclass',
-           'replace',
-           'is_dataclass',
-           ]
+__all__ = [
+    "dataclass",
+    "field",
+    "Field",
+    "FrozenInstanceError",
+    "InitVar",
+    "KW_ONLY",
+    "MISSING",
+    # Helper functions.
+    "fields",
+    "asdict",
+    "astuple",
+    "make_dataclass",
+    "replace",
+    "is_dataclass",
+]
 
 # Extra items for our module.
 __all__ += ["frozen_field", "FrozenField", "freeze_fields", "FrozenFieldPlaceholder"]
@@ -64,16 +77,17 @@ class FrozenField[T]:
 
     def __set__(self, instance: object, value: T) -> None:
         if hasattr(instance, self._private_name):
-            msg = f"Attribute `{self._private_name[len(FROZEN_PREFIX):]}` is immutable!"
+            msg = f"Attribute `{self._private_name[len(FROZEN_PREFIX) :]}` is immutable!"
             raise TypeError(msg) from None
 
         setattr(instance, self._private_name, value)
 
 
 error = RuntimeError(
-    f"This field is created via frozen_field() but the @freezable_dataclass decorator is not used on the dataclass. "
-    f"Replace your use of @dataclass with @freezable_dataclass."
+    "This field is created via frozen_field() but the @freezable_dataclass decorator is not used on the dataclass. "
+    "Replace your use of @dataclass with @freezable_dataclass."
 )
+
 
 class FrozenFieldPlaceholder:
     """A placeholder for a frozen field before @dataclass transformation.
@@ -98,7 +112,9 @@ def frozen_field(**kwargs: Any) -> Any:
     return FrozenFieldPlaceholder(**kwargs, metadata=metadata)
 
 
-def freeze_fields[T](cls: type[T], *, classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch") -> type[T]:
+def freeze_fields[T](
+    cls: type[T], *, classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch"
+) -> type[T]:
     """
     A decorator that makes fields of a dataclass immutable, if they have the `frozen` metadata set to True.
 
@@ -141,6 +157,7 @@ def freeze_fields[T](cls: type[T], *, classvar_frozen_assignment: Literal["patch
         orig_meta_setattr = metacls.__setattr__
 
         if classvar_frozen_assignment == "patch":
+
             def meta_getattribute(cls: type[T], name: str) -> Any:
                 try:
                     descriptor_vars = orig_meta_getattribute(cls, "__frozen_dataclass_descriptors__")
@@ -177,7 +194,9 @@ def freeze_fields[T](cls: type[T], *, classvar_frozen_assignment: Literal["patch
         # Caveat: This would trigger the metaclass's __init_subclass__ method, which is not ideal, but it should not be common
         # to have a metaclass with __init_subclass__. Even if it has one, it is probably less surprising to have it triggered without
         # the user knowing here, than to patch it temporarily and then patch it back.
-        new_meta = type("FreezableDataclassMeta", (metacls,), {"__getattribute__": meta_getattribute, "__setattr__": meta_setattr})
+        new_meta = type(
+            "FreezableDataclassMeta", (metacls,), {"__getattribute__": meta_getattribute, "__setattr__": meta_setattr}
+        )
 
         # If either of the following is true, we need to create a new class:
         #
@@ -199,13 +218,11 @@ def freeze_fields[T](cls: type[T], *, classvar_frozen_assignment: Literal["patch
 
         cls_dict = dict(cls.__dict__)
         # This if block is mostly copied from dataclasses._process_class, but with extra handling for frozen fields.
-        if '__slots__' in cls.__dict__:
+        if "__slots__" in cls.__dict__:
             needs_new_class = True
             field_names = tuple(f.name for f in fields(cls))
             # Make sure slots don't overlap with those in base classes.
-            inherited_slots = set(
-                itertools.chain.from_iterable(map(_get_slots, cls.__mro__[1:-1]))
-            )
+            inherited_slots = set(itertools.chain.from_iterable(map(_get_slots, cls.__mro__[1:-1])))
             # The slots for our class.  Remove slots from our base classes.  Add
             # '__weakref__' if weakref_slot was given, unless it is already present.
             cls_dict["__slots__"] = tuple(
@@ -214,28 +231,27 @@ def freeze_fields[T](cls: type[T], *, classvar_frozen_assignment: Literal["patch
                     itertools.chain(
                         # gh-93521: '__weakref__' also needs to be filtered out if
                         # already present in inherited_slots
-                        field_names, ('__weakref__',) if params.weakref_slot else ()
-                    )
+                        field_names,
+                        ("__weakref__",) if params.weakref_slot else (),
+                    ),
                 ),
             )
 
             # Add our frozen fields to the slots, so they can be used by descriptors.
-            cls_dict["__slots__"] += tuple(
-                FROZEN_PREFIX + field_name for field_name in field_names
-            )
+            cls_dict["__slots__"] += tuple(FROZEN_PREFIX + field_name for field_name in field_names)
 
             for field_name in field_names:
                 # Remove our attributes, if present. They'll still be available in _MARKER.
                 cls_dict.pop(field_name, None)
 
             # Remove __dict__ itself.
-            cls_dict.pop('__dict__', None)
+            cls_dict.pop("__dict__", None)
 
             # Clear existing `__weakref__` descriptor, it belongs to a previous type:
-            cls_dict.pop('__weakref__', None)  # gh-102069
+            cls_dict.pop("__weakref__", None)  # gh-102069
 
         if needs_new_class:
-            qualname = getattr(cls, '__qualname__', None)
+            qualname = getattr(cls, "__qualname__", None)
             new_cls = new_meta(cls.__name__, cls.__bases__, cls_dict)
             if qualname is not None:
                 new_cls.__qualname__ = qualname
@@ -259,27 +275,29 @@ def freeze_fields[T](cls: type[T], *, classvar_frozen_assignment: Literal["patch
     new_cls.__frozen_dataclass_descriptors__ = descriptor_vars
     return new_cls
 
+
 def _get_slots(cls: type):
-    match cls.__dict__.get('__slots__'):
+    match cls.__dict__.get("__slots__"):
         # `__dictoffset__` and `__weakrefoffset__` can tell us whether
         # the base type has dict/weakref slots, in a way that works correctly
         # for both Python classes and C extension types. Extension types
         # don't use `__slots__` for slot creation
         case None:
             slots = []
-            if getattr(cls, '__weakrefoffset__', -1) != 0:
-                slots.append('__weakref__')
-            if getattr(cls, '__dictoffset__', -1) != 0:
-                slots.append('__dict__')
+            if getattr(cls, "__weakrefoffset__", -1) != 0:
+                slots.append("__weakref__")
+            if getattr(cls, "__dictoffset__", -1) != 0:
+                slots.append("__dict__")
             yield from slots
         case str(slot):
             yield slot
         # Slots may be any iterable, but we cannot handle an iterator
         # because it will already be (partially) consumed.
-        case iterable if not hasattr(iterable, '__next__'):
+        case iterable if not hasattr(iterable, "__next__"):
             yield from iterable
         case _:
             raise TypeError(f"Slots of '{cls.__name__}' cannot be determined")
+
 
 def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -> None:
     """Replaces the object created by frozen_field() with a dataclass field to make dataclass transformation work properly.
@@ -294,6 +312,7 @@ def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -
             kwargs = object.__getattribute__(default, "kwargs")
             # Replace the FrozenFieldPlaceholder with a dataclass field
             setattr(cls, name, field(**kwargs))
+
 
 @dataclass_transform()
 @signature_from(std_dataclass)
@@ -312,7 +331,9 @@ def dataclass[_T](cls: type[_T] | None = None, /, **kwargs: Any) -> Any:
 
     def wrap(cls: type[_T]):
         replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls)
-        classvar_frozen_assignment = kwargs.pop("classvar_frozen_assignment", "patch")  # Not supported by dataclass, so we remove it.
+        classvar_frozen_assignment = kwargs.pop(
+            "classvar_frozen_assignment", "patch"
+        )  # Not supported by dataclass, so we remove it.
         if classvar_frozen_assignment not in ("patch", "replace", "error"):
             raise ValueError(
                 f"Invalid value for classvar_frozen_assignment: {classvar_frozen_assignment}. "
