@@ -1,0 +1,89 @@
+[project]
+name = "semimutable"
+authors = [
+    { name = "Glinte" }
+]
+version = "0.1.0a0"
+description = "Drop-in replacement for Python's built-in `dataclasses` module, allowing for certain fields to be mutable while others remain immutable."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["dataclasses"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://github.com/Glinte/semimutable"
+Repository = "https://github.com/Glinte/semimutable"
+Issues = "https://github.com/Glinte/semimutable/issues"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.31.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.4",
+]
+packaging = [
+    "twine>=6.1.0",
+]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+ignore = []
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+pythonPlatform = "All"
+typeCheckingMode = "standard"
+
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+deprecateTypingAliases = true
+reportPropertyTypeMismatch = "error"
+reportUntypedFunctionDecorator = "information"
+reportUntypedClassDecorator = "information"
+reportUntypedBaseClass = "information"
+reportUntypedNamedTuple = "information"
+reportPrivateUsage = "warning"
+reportConstantRedefinition = "information"
+reportDeprecated = "information"
+reportInconsistentConstructor = "warning"
+reportUnknownVariableType = "information"
+reportMissingParameterType = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportUnnecessaryCast = "warning"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryContains = "error"
+reportImplicitOverride = "error"
+reportShadowedImports = "error"
+reportAny = false
