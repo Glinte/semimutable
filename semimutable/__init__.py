@@ -1,3 +1,10 @@
+"""Utilities for partially-frozen dataclasses.
+
+Portions of this file are adapted from Python's standard library
+`dataclasses` module, which is licensed under the Python Software
+Foundation License.
+"""
+
 import itertools
 from dataclasses import (
     KW_ONLY,
