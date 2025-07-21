@@ -84,15 +84,15 @@ class FrozenField[T]:
 
 
 error = RuntimeError(
-    "This field is created via frozen_field() but the @freezable_dataclass decorator is not used on the dataclass. "
-    "Replace your use of @dataclass with @freezable_dataclass."
+    "This field is created via frozen_field() but the @semimutable.dataclass decorator is not used on the dataclass. "
+    "Replace your use of @dataclass with @semimutable.dataclass."
 )
 
 
 class FrozenFieldPlaceholder:
     """A placeholder for a frozen field before @dataclass transformation.
 
-    If @freezable_dataclass is not used, this will raise an error when accessed. Otherwise, it will be replaced with a FrozenField descriptor.
+    If @semimutable.dataclass is not used, this will raise an error when accessed. Otherwise, it will be replaced with a FrozenField descriptor.
     """
 
     def __init__(self, **kwargs: Any) -> None:
@@ -303,8 +303,8 @@ def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -
     """Replaces the object created by frozen_field() with a dataclass field to make dataclass transformation work properly.
 
     This is needed because frozen_field() creates a magic object that errors on runtime if accessed directly, to avoid
-    itself being used on a normal dataclasses rather than one with the @freezable_dataclass decorator, as it would
-    not prevent runtime mutations of the dataclass fields without the @freezable_dataclass decorator.
+    itself being used on a normal dataclasses rather than one with the @semimutable.dataclass decorator, as it would
+    not prevent runtime mutations of the dataclass fields without the @semimutable.dataclass decorator.
     """
     for name in cls.__annotations__:
         default = getattr(cls, name, None)
