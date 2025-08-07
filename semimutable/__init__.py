@@ -88,8 +88,7 @@ class FrozenField[T]:
 
     def __set__(self, instance: object, value: T) -> None:
         if hasattr(instance, self._private_name):
-            msg = f"Attribute `{self._private_name[len(FROZEN_PREFIX) :]}` is immutable!"
-            raise TypeError(msg) from None
+            raise FrozenFieldError(self._private_name[len(FROZEN_PREFIX) :]) from None
 
         setattr(instance, self._private_name, value)
 
