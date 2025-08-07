@@ -1,6 +1,6 @@
 """Utilities for partially-frozen dataclasses.
 
-Portions of the `freeze_fields` function is adapted from Python's standard library `dataclasses` module, which is
+Portions of the `freeze_fields` function are adapted from Python's standard library `dataclasses` module, which is
 licensed under the Python Software Foundation License.
 """
 
