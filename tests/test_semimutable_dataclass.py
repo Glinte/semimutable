@@ -2,13 +2,13 @@ import dataclasses
 
 import pytest
 
-from semimutable import FrozenFieldError, dataclass, frozen_field
+from semimutable import FrozenFieldError, dataclass, field
 
 
 def test_frozen_field_is_immutable():
     @dataclass(slots=True)
     class Sm:
-        x: int = frozen_field()
+        x: int = field(frozen=True)
         y: int = 0
 
     sm = Sm(x=1, y=2)
@@ -20,7 +20,7 @@ def test_frozen_field_is_immutable():
 def test_non_frozen_field_is_mutable():
     @dataclass(slots=True)
     class Sm:
-        x: int = frozen_field()
+        x: int = field(frozen=True)
         y: int = 0
 
     sm = Sm(x=1, y=2)
@@ -32,11 +32,11 @@ def test_plain_dataclass_is_refused():
 
         @dataclasses.dataclass
         class Bad:
-            x: int = frozen_field()
+            x: int = field(frozen=True)
 
     @dataclass
     class Good:
-        x: int = frozen_field()
+        x: int = field(frozen=True)
 
     Good(x=1)
 
@@ -44,7 +44,7 @@ def test_plain_dataclass_is_refused():
 def test_classvar_assignment_replace_allows_mutation():
     @dataclass(classvar_frozen_assignment="replace")
     class Sm:
-        x: int = frozen_field()
+        x: int = field(frozen=True)
 
     Sm.x = 10
     sm = Sm(x=1)
@@ -57,7 +57,7 @@ def test_classvar_assignment_replace_allows_mutation():
 def test_classvar_assignment_error_raises():
     @dataclass(classvar_frozen_assignment="error")
     class Sm:
-        x: int = frozen_field()
+        x: int = field(frozen=True)
 
     with pytest.raises(FrozenFieldError):
         Sm.x = 10

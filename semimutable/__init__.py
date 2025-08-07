@@ -13,13 +13,13 @@ from dataclasses import (
     InitVar,
     asdict,
     astuple,
-    field,
     fields,
     is_dataclass,
     make_dataclass,
     replace,
 )
 from dataclasses import dataclass as std_dataclass
+from dataclasses import field as std_field
 from typing import TYPE_CHECKING, Any, Callable, Final, Literal, Never, Self, dataclass_transform, overload, override
 
 # Type checkers hate private imports, even though this is technically legal. So we lie to them.
@@ -55,7 +55,7 @@ __all__ = [
 ]
 
 # Extra items for our module.
-__all__ += ["frozen_field", "FrozenField", "freeze_fields", "FrozenFieldPlaceholder", "FrozenFieldError"]
+__all__ += ["FrozenField", "freeze_fields", "FrozenFieldPlaceholder", "FrozenFieldError"]
 
 # Note: This prefix CANNOT be dunder, because we used dynamic class creation it would cause name mangling issues.
 FROZEN_PREFIX: Final = "_frozen_"
@@ -96,7 +96,7 @@ class FrozenField[T]:
 
 
 error = RuntimeError(
-    "This field is created via frozen_field() but the @semimutable.dataclass decorator is not used on the dataclass. "
+    "This field is created via field(frozen=True) but the @semimutable.dataclass decorator is not used on the dataclass. "
     "Replace your use of @dataclass with @semimutable.dataclass."
 )
 
@@ -118,7 +118,7 @@ class FrozenFieldPlaceholder:
 
 
 @overload
-def frozen_field[_T](
+def field[_T](
     *,
     default: _T,
     default_factory: _MISSING_TYPE = MISSING,  # type: ignore
@@ -126,13 +126,14 @@ def frozen_field[_T](
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
+    frozen: bool = False,
     metadata: dict[str, Any] | None = None,
     kw_only: _MISSING_TYPE = MISSING,  # type: ignore
 ) -> _T: ...
 
 
 @overload
-def frozen_field[_T](
+def field[_T](
     *,
     default: _MISSING_TYPE = MISSING,  # type: ignore
     default_factory: Callable[[], _T],
@@ -140,13 +141,14 @@ def frozen_field[_T](
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
+    frozen: bool = False,
     metadata: dict[str, Any] | None = None,
     kw_only: _MISSING_TYPE = MISSING,  # type: ignore
 ) -> _T: ...
 
 
 @overload
-def frozen_field(
+def field(
     *,
     default: _MISSING_TYPE = MISSING,  # type: ignore
     default_factory: _MISSING_TYPE = MISSING,  # type: ignore
@@ -154,12 +156,13 @@ def frozen_field(
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
+    frozen: bool = False,
     metadata: dict[str, Any] | None = None,
     kw_only: _MISSING_TYPE = MISSING,  # type: ignore
 ) -> Any: ...
 
 
-def frozen_field(
+def field(
     *,
     default: Any = MISSING,
     default_factory: Callable[[], Any] | _MISSING_TYPE = MISSING,  # type: ignore
@@ -167,13 +170,26 @@ def frozen_field(
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
+    frozen: bool = False,
     metadata: dict[str, Any] | None = None,
     kw_only: bool | _MISSING_TYPE = MISSING,  # type: ignore
 ) -> Any:
-    """Like :func:`dataclasses.field` but marks the field as frozen."""
+    """Like :func:`dataclasses.field` but marks the field as frozen when requested."""
 
-    metadata = (metadata or {}) | {"frozen": True}
-    return FrozenFieldPlaceholder(
+    if frozen:
+        metadata = (metadata or {}) | {"frozen": True}
+        return FrozenFieldPlaceholder(
+            default=default,
+            default_factory=default_factory,
+            init=init,
+            repr=repr,
+            hash=hash,
+            compare=compare,
+            metadata=metadata,
+            kw_only=kw_only,
+        )
+
+    return std_field(
         default=default,
         default_factory=default_factory,
         init=init,
@@ -360,7 +376,7 @@ def freeze_fields[T](
             new_cls = cls
 
     descriptor_vars = set()
-    # Now we can iterate over the fields and replace the frozen fields (those with "frozen" in their metadata, as set by frozen_field())
+    # Now we can iterate over the fields and replace the frozen fields (those with "frozen" in their metadata, as set by field(frozen=True))
     # with FrozenField descriptors.
     for f in fields(cls):  # pyright: ignore[reportArgumentType]  # cls must be a dataclass
         if "frozen" in f.metadata:
@@ -377,9 +393,9 @@ def freeze_fields[T](
 
 
 def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -> None:
-    """Replaces the object created by frozen_field() with a dataclass field to make dataclass transformation work properly.
+    """Replaces the object created by ``field(frozen=True)`` with a dataclass field to make dataclass transformation work properly.
 
-    This is needed because frozen_field() creates a magic object that errors on runtime if accessed directly, to avoid
+    This is needed because ``field(frozen=True)`` creates a magic object that errors on runtime if accessed directly, to avoid
     itself being used on a normal dataclasses rather than one with the @semimutable.dataclass decorator, as it would
     not prevent runtime mutations of the dataclass fields without the @semimutable.dataclass decorator.
     """
@@ -388,7 +404,7 @@ def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -
         if isinstance(default, FrozenFieldPlaceholder):
             kwargs = object.__getattribute__(default, "kwargs")
             # Replace the FrozenFieldPlaceholder with a dataclass field
-            setattr(cls, name, field(**kwargs))
+            setattr(cls, name, std_field(**kwargs))
 
 
 @overload
@@ -446,7 +462,7 @@ def dataclass[_T](
     weakref_slot: bool = False,
     classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch",
 ) -> Any:
-    """Just like @dataclass, but if you use frozen_field() in the class, it will make that field immutable.
+    """Just like @dataclass, but if you use ``field(frozen=True)`` in the class, it will make that field immutable.
 
     Additional kwargs not supported @dataclass:
         classvar_frozen_assignment (Literal["patch", "replace"] | None):
