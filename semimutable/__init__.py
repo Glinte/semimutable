@@ -427,6 +427,10 @@ def dataclass[_T](
                 any class variable. Default is "patch".
             - "replace" will replace the FrozenField descriptor with a normal class variable, allowing you to assign to it.
                 Warning: this will break the immutability of the field.
+            - "error" will raise an error if you try to assign to a frozen field in the class body. This has the same
+                performance penalty as "patch", but it will not allow you to assign to the field in the class body. This
+                is useful for ensuring that you do not accidentally mutate the class variable, before switching to "replace".
+                Otherwise, it is recommended to use "patch" or "replace" instead.
     """
 
     def wrap(cls: type[_T]):
