@@ -19,8 +19,18 @@ from dataclasses import (
     make_dataclass,
     replace,
 )
-from dataclasses import dataclass as std_dataclass, _get_slots
-from typing import Any, Callable, Final, Literal, Never, Self, dataclass_transform, overload, override
+from dataclasses import dataclass as std_dataclass
+from typing import TYPE_CHECKING, Any, Callable, Final, Literal, Never, Self, dataclass_transform, overload, override
+
+# Type checkers hate private imports, even though this is technically legal. So we lie to them.
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    # The type hints should match the actual implementation.
+    def _get_slots(cls: type) -> Generator[str, None, None]:
+        raise RuntimeError
+else:
+    from dataclasses import _get_slots
 
 __version__ = "0.1.0a0"
 
