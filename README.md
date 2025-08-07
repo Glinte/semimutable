@@ -1,6 +1,6 @@
 # Semimutable
 
-[![Tests](https://github.com/Glinte/semimutable/actions/workflows/ci.yml/badge.svg)](https://github.com/Glinte/semimutable/actions/workflows/tests.yml)
+[![Tests](https://github.com/Glinte/semimutable/actions/workflows/ci.yml/badge.svg)](https://github.com/Glinte/semimutable/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Glinte/semimutable/branch/main/graph/badge.svg)](https://codecov.io/gh/Glinte/semimutable)
 
 A dataclass drop-in that allows you to define individual fields as immutable.
