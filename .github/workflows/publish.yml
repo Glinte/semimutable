@@ -7,43 +7,8 @@ on:
 
 jobs:
   test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.12', '3.13', '3.14']
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          version: "0.6.14"
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-      
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-
-      - name: Install the project
-        run: uv sync --all-extras --dev
-      
-      - name: Run tests
-        run: pytest --cov=semimutable --cov-report=term --cov-branch --cov-report=xml
-      
-      - name: Run linting
-        run: ruff check .
-      
-      - name: Run type checking
-        run: basedpyright
-
-      - name: Minimize uv cache
-        run: uv cache prune --ci
+    name: Run CI Tests
+    uses: ./.github/workflows/ci.yml
     
   build-and-publish:
     name: Build and Publish to PyPI
