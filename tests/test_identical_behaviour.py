@@ -45,11 +45,11 @@ def test_class_attribute_rebinding_is_not_noop_if_slots_true():
 
 
 def test_class_attribute_rebinding_is_noop_if_slots_false():
-    @dataclasses.dataclass(slots=True)
+    @dataclasses.dataclass(slots=False)
     class Std:
         x: int = dataclasses.field()
 
-    @semimutable.dataclass(slots=True)
+    @semimutable.dataclass(slots=False)
     class Sm:
         x: int = semimutable.frozen_field()
 
