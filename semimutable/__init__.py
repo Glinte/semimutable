@@ -20,7 +20,7 @@ from dataclasses import (
     make_dataclass,
     replace,
 )
-from dataclasses import dataclass as std_dataclass
+from dataclasses import dataclass as std_dataclass, _get_slots
 from typing import Any, Callable, Final, Literal, Never, Self, dataclass_transform, overload, override
 
 __version__ = "0.1.0a0"
@@ -281,29 +281,6 @@ def freeze_fields[T](
     # __frozen_dataclass_descriptors__ attribute.
     new_cls.__frozen_dataclass_descriptors__ = descriptor_vars
     return new_cls
-
-
-def _get_slots(cls: type):
-    match cls.__dict__.get("__slots__"):
-        # `__dictoffset__` and `__weakrefoffset__` can tell us whether
-        # the base type has dict/weakref slots, in a way that works correctly
-        # for both Python classes and C extension types. Extension types
-        # don't use `__slots__` for slot creation
-        case None:
-            slots = []
-            if getattr(cls, "__weakrefoffset__", -1) != 0:
-                slots.append("__weakref__")
-            if getattr(cls, "__dictoffset__", -1) != 0:
-                slots.append("__dict__")
-            yield from slots
-        case str(slot):
-            yield slot
-        # Slots may be any iterable, but we cannot handle an iterator
-        # because it will already be (partially) consumed.
-        case iterable if not hasattr(iterable, "__next__"):
-            yield from iterable
-        case _:
-            raise TypeError(f"Slots of '{cls.__name__}' cannot be determined")
 
 
 def replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls: type) -> None:
