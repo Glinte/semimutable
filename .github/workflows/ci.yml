@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_call:
 
 jobs:
   test:
@@ -38,6 +39,11 @@ jobs:
       
       - name: Run tests
         run: pytest --cov=semimutable --cov-report=term --cov-branch --cov-report=xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Run linting
         run: ruff check .
