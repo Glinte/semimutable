@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 else:
     from dataclasses import _MISSING_TYPE, _get_slots
 
-__version__ = "0.1.0a0"
+__version__ = "0.1.0"
 
 # Exact match of dataclasses module's __all__.
 __all__ = [

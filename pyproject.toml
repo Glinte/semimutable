@@ -3,7 +3,7 @@ name = "semimutable"
 authors = [
     { name = "Glinte" }
 ]
-version = "0.1.0a0"
+version = "0.1.0"
 description = "Drop-in replacement for Python's built-in `dataclasses` module, allowing for certain fields to be mutable while others remain immutable."
 readme = "README.md"
 requires-python = ">=3.12"
