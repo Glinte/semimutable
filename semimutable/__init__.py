@@ -119,54 +119,54 @@ class FrozenFieldPlaceholder:
 def frozen_field[_T](
     *,
     default: _T,
-    default_factory: type[MISSING] = MISSING,
+    default_factory: type[MISSING] = MISSING,  # type: ignore
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: type[MISSING] = MISSING,
+    kw_only: type[MISSING] = MISSING,  # type: ignore
 ) -> _T: ...
 
 
 @overload
 def frozen_field[_T](
     *,
-    default: type[MISSING] = MISSING,
+    default: type[MISSING] = MISSING,  # type: ignore
     default_factory: Callable[[], _T],
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: type[MISSING] = MISSING,
+    kw_only: type[MISSING] = MISSING,  # type: ignore
 ) -> _T: ...
 
 
 @overload
 def frozen_field(
     *,
-    default: type[MISSING] = MISSING,
-    default_factory: type[MISSING] = MISSING,
+    default: type[MISSING] = MISSING,  # type: ignore
+    default_factory: type[MISSING] = MISSING,  # type: ignore
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: type[MISSING] = MISSING,
+    kw_only: type[MISSING] = MISSING,  # type: ignore
 ) -> Any: ...
 
 
 def frozen_field(
     *,
     default: Any = MISSING,
-    default_factory: Callable[[], Any] | type[MISSING] = MISSING,
+    default_factory: Callable[[], Any] | type[MISSING] = MISSING,  # type: ignore
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: bool | type[MISSING] = MISSING,
+    kw_only: bool | type[MISSING] = MISSING,  # type: ignore
 ) -> Any:
     """Like :func:`dataclasses.field` but marks the field as frozen."""
 
@@ -223,8 +223,9 @@ def freeze_fields[T](
         # For "patch" and "error", we need to replace the metaclass's __getattribute__ and __setattr__ methods to hook
         # into the class variable assignment and retrieval for frozen fields. Either to patch the class variable assignment
         # to a hidden variable, or to raise an error if the field is frozen and the class variable is assigned to.
-        metacls = cls.__class__
-        orig_meta_getattribute = metacls.__getattribute__  # This is an unbound method
+        metacls: type[type[T]] = cls.__class__  # type: ignore  # typeshed bug, should be type[object] but it is annotated as property
+        # The following two methods are unbound methods despite what pyright says.
+        orig_meta_getattribute = metacls.__getattribute__
         orig_meta_setattr = metacls.__setattr__
 
         if classvar_frozen_assignment == "patch":
@@ -289,9 +290,9 @@ def freeze_fields[T](
         # Caveat: This would trigger the metaclass's __init_subclass__ method, which is not ideal, but it should not be common
         # to have a metaclass with __init_subclass__. Even if it has one, it is probably less surprising to have it triggered without
         # the user knowing here, than to patch it temporarily and then patch it back.
-        new_meta = type(
+        new_meta: type[type[T]] = type(
             "FreezableDataclassMeta", (metacls,), {"__getattribute__": meta_getattribute, "__setattr__": meta_setattr}
-        )
+        )  # pyright: ignore[reportAssignmentType] # pyright does not understand subclass relationships well in this usage of type()
 
         # If either of the following is true, we need to create a new class:
         #
@@ -305,7 +306,7 @@ def freeze_fields[T](
         needs_new_class = False
         # See if we can just directly swap the class's metaclass, if so we can avoid creating a new class.
         try:
-            cls.__class__ = new_meta
+            cls.__class__ = new_meta  # pyright: ignore[reportAttributeAccessIssue]
         except TypeError:
             # TypeError: __class__ assignment only supported for mutable types or ModuleType subclasses
             # Not sure what this means, but creating a new class is the only way to go.
@@ -316,7 +317,7 @@ def freeze_fields[T](
         # Copyright (c) 2001-2025 Python Software Foundation; All Rights Reserved
         if "__slots__" in cls.__dict__:
             needs_new_class = True
-            field_names = tuple(f.name for f in fields(cls))
+            field_names = tuple(f.name for f in fields(cls))  # pyright: ignore[reportArgumentType]  # cls must be a dataclass
             # Make sure slots don't overlap with those in base classes.
             inherited_slots = set(itertools.chain.from_iterable(map(_get_slots, cls.__mro__[1:-1])))
             # The slots for our class.  Remove slots from our base classes.  Add
@@ -349,7 +350,7 @@ def freeze_fields[T](
 
         if needs_new_class:
             qualname = getattr(cls, "__qualname__", None)
-            new_cls = new_meta(cls.__name__, cls.__bases__, cls_dict)
+            new_cls = new_meta(cls.__name__, cls.__bases__, cls_dict)  # pyright: ignore[reportCallIssue]
             if qualname is not None:
                 new_cls.__qualname__ = qualname
         else:
@@ -359,7 +360,7 @@ def freeze_fields[T](
     descriptor_vars = set()
     # Now we can iterate over the fields and replace the frozen fields (those with "frozen" in their metadata, as set by frozen_field())
     # with FrozenField descriptors.
-    for f in fields(cls):
+    for f in fields(cls):  # pyright: ignore[reportArgumentType]  # cls must be a dataclass
         if "frozen" in f.metadata:
             setattr(new_cls, f.name, FrozenField(f.name))
             descriptor_vars.add(f.name)
@@ -369,7 +370,7 @@ def freeze_fields[T](
     # __setattr__ methods. Avoiding an isinstance check on every attribute access.
     # 2. It allows external code to check if a class is a freezable dataclass, by checking if it has the
     # __frozen_dataclass_descriptors__ attribute.
-    new_cls.__frozen_dataclass_descriptors__ = descriptor_vars
+    new_cls.__frozen_dataclass_descriptors__ = descriptor_vars  # pyright: ignore[reportAttributeAccessIssue]
     return new_cls
 
 
