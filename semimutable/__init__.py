@@ -1,8 +1,7 @@
 """Utilities for partially-frozen dataclasses.
 
-Portions of this file are adapted from Python's standard library
-`dataclasses` module, which is licensed under the Python Software
-Foundation License.
+Portions of the `freeze_fields` function is adapted from Python's standard library `dataclasses` module, which is
+licensed under the Python Software Foundation License.
 """
 
 import itertools
@@ -225,6 +224,7 @@ def freeze_fields[T](
 
         cls_dict = dict(cls.__dict__)
         # This if block is mostly copied from dataclasses._process_class, but with extra handling for frozen fields.
+        # Copyright (c) 2001-2025 Python Software Foundation; All Rights Reserved
         if "__slots__" in cls.__dict__:
             needs_new_class = True
             field_names = tuple(f.name for f in fields(cls))
@@ -256,6 +256,7 @@ def freeze_fields[T](
 
             # Clear existing `__weakref__` descriptor, it belongs to a previous type:
             cls_dict.pop("__weakref__", None)  # gh-102069
+        # End of copied block from dataclasses._process_class
 
         if needs_new_class:
             qualname = getattr(cls, "__qualname__", None)
