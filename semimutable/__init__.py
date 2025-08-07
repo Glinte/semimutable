@@ -209,7 +209,7 @@ def freeze_fields[T](
     """
 
     cls_fields = getattr(cls, "__dataclass_fields__", None)
-    if cls_fields is None:
+    if cls_fields is None:  # pragma: no cover
         raise TypeError(f"{cls} is not a dataclass")
 
     params = getattr(cls, "__dataclass_params__")
@@ -464,7 +464,7 @@ def dataclass[_T](
 
     def wrap(cls: type[_T]):
         replace_frozen_field_placeholders_with_dataclass_fields_inplace(cls)
-        if classvar_frozen_assignment not in ("patch", "replace", "error"):
+        if classvar_frozen_assignment not in ("patch", "replace", "error"):  # pragma: no cover
             raise ValueError(
                 f"Invalid value for classvar_frozen_assignment: {classvar_frozen_assignment}. "
                 "Expected 'patch', 'replace', or 'error'."
