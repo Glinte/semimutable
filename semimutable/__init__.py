@@ -26,11 +26,13 @@ from typing import TYPE_CHECKING, Any, Callable, Final, Literal, Never, Self, da
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    _MISSING_TYPE = Never
+
     # The type hints should match the actual implementation.
     def _get_slots(cls: type) -> Generator[str, None, None]:
         raise RuntimeError
 else:
-    from dataclasses import _get_slots
+    from dataclasses import _get_slots, _MISSING_TYPE
 
 __version__ = "0.1.0a0"
 
@@ -119,54 +121,54 @@ class FrozenFieldPlaceholder:
 def frozen_field[_T](
     *,
     default: _T,
-    default_factory: type[MISSING] = MISSING,  # type: ignore
+    default_factory: _MISSING_TYPE = MISSING,  # type: ignore
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: type[MISSING] = MISSING,  # type: ignore
+    kw_only: _MISSING_TYPE = MISSING,  # type: ignore
 ) -> _T: ...
 
 
 @overload
 def frozen_field[_T](
     *,
-    default: type[MISSING] = MISSING,  # type: ignore
+    default: _MISSING_TYPE = MISSING,  # type: ignore
     default_factory: Callable[[], _T],
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: type[MISSING] = MISSING,  # type: ignore
+    kw_only: _MISSING_TYPE = MISSING,  # type: ignore
 ) -> _T: ...
 
 
 @overload
 def frozen_field(
     *,
-    default: type[MISSING] = MISSING,  # type: ignore
-    default_factory: type[MISSING] = MISSING,  # type: ignore
+    default: _MISSING_TYPE = MISSING,  # type: ignore
+    default_factory: _MISSING_TYPE = MISSING,  # type: ignore
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: type[MISSING] = MISSING,  # type: ignore
+    kw_only: _MISSING_TYPE = MISSING,  # type: ignore
 ) -> Any: ...
 
 
 def frozen_field(
     *,
     default: Any = MISSING,
-    default_factory: Callable[[], Any] | type[MISSING] = MISSING,  # type: ignore
+    default_factory: Callable[[], Any] | _MISSING_TYPE = MISSING,  # type: ignore
     init: bool = True,
     repr: bool = True,
     hash: bool | None = None,
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
-    kw_only: bool | type[MISSING] = MISSING,  # type: ignore
+    kw_only: bool | _MISSING_TYPE = MISSING,  # type: ignore
 ) -> Any:
     """Like :func:`dataclasses.field` but marks the field as frozen."""
 
