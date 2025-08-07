@@ -25,7 +25,8 @@ def test_already_frozen_class_raises_frozen_instance_error():
             inst.x = 8
 
 
-@pytest.xfail("FIXME: semimutable always handles class variables consistently regardless of slots=True, but seems like dataclasses does not.")
+# FIXME: semimutable always handles class variables consistently regardless of slots=True, but seems like dataclasses does not.
+@pytest.mark.xfail
 def test_class_attribute_rebinding_is_not_noop_if_slots_true():
     @dataclasses.dataclass(slots=True)
     class Std:
