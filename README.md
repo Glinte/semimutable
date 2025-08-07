@@ -7,18 +7,18 @@ A dataclass drop-in that allows you to define individual fields as immutable.
 
 ## Usage
 
-Simply replace all your `dataclasses` imports with `semimutable`, and use `frozen_field` to replace `field` for the fields you want to be immutable.
+Simply replace all your `dataclasses` imports with `semimutable`, and use `field(frozen=True)` for the fields you want to be immutable.
 
-`frozen_field` takes in the same parameters as `dataclasses.field`, so you can specify default values, default factories, and other options just like you would with a regular dataclass field.
+`field` takes in the same parameters as `dataclasses.field`, with an extra `frozen` boolean flag that defaults to `False`. You can specify default values, default factories, and other options just like you would with a regular dataclass field.
 
 Here is one example from our tests.
 
 ```python
-from semimutable import dataclass, frozen_field
+from semimutable import dataclass, field
 
 @dataclass
 class Simple:
-    x: int = frozen_field()
+    x: int = field(frozen=True)
     y: int = 0 # normal, mutable field
 
 def test_frozen_field_is_immutable():

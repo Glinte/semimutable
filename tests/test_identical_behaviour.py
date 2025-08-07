@@ -30,13 +30,13 @@ def test_already_frozen_class_raises_frozen_instance_error():
 # FIXME: semimutable always handles class variables consistently regardless of slots=True, but seems like dataclasses does not.
 @pytest.mark.xfail
 def test_class_attribute_rebinding_is_not_noop_if_slots_true():
-    @dataclasses.dataclass(slots=True)
+    @dataclasses.dataclass
     class Std:
         x: int = dataclasses.field()
 
-    @semimutable.dataclass(slots=True)
+    @semimutable.dataclass
     class Sm:
-        x: int = semimutable.frozen_field()
+        x: int = semimutable.field(frozen=True)
 
     std = Std(x=5)
     sm = Sm(x=5)
@@ -53,7 +53,7 @@ def test_class_attribute_rebinding_is_noop_if_slots_false():
 
     @semimutable.dataclass(slots=False)
     class Sm:
-        x: int = semimutable.frozen_field()
+        x: int = semimutable.field(frozen=True)
 
     std = Std(x=5)
     sm = Sm(x=5)
@@ -91,7 +91,7 @@ def test_custom_metaclass_behavior_preserved():
 
     @semimutable.dataclass(slots=True)
     class Sm(metaclass=WeirdMeta):
-        a: int = semimutable.frozen_field()
+        a: int = semimutable.field(frozen=True)
         b: int = 0
 
     for cls in (Std, Sm):
@@ -129,7 +129,7 @@ def test_order_option():
 
     @semimutable.dataclass(order=True)
     class Sm:
-        x: int = semimutable.frozen_field()
+        x: int = semimutable.field(frozen=True)
         y: int  # pyright: ignore[reportGeneralTypeIssues]  # FIXME: Fields without default values cannot appear after fields with default values
 
     s1_std, s2_std = Std(x=1, y=2), Std(x=1, y=3)
@@ -145,7 +145,7 @@ def test_weakref_slot_option():
 
     @semimutable.dataclass(weakref_slot=True, slots=True)
     class Sm:
-        x: int = semimutable.frozen_field()
+        x: int = semimutable.field(frozen=True)
 
     for cls in (Std, Sm):
         inst = cls(x=1)
@@ -161,7 +161,7 @@ def test_kw_only_option():
 
     @semimutable.dataclass(kw_only=True)
     class Sm:
-        x: int = semimutable.frozen_field()
+        x: int = semimutable.field(frozen=True)
         y: int
 
     with pytest.raises(TypeError):
