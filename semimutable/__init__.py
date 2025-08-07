@@ -126,8 +126,7 @@ def frozen_field[_T](
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
     kw_only: type[MISSING] = MISSING,
-) -> _T:
-    ...
+) -> _T: ...
 
 
 @overload
@@ -141,8 +140,7 @@ def frozen_field[_T](
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
     kw_only: type[MISSING] = MISSING,
-) -> _T:
-    ...
+) -> _T: ...
 
 
 @overload
@@ -156,8 +154,7 @@ def frozen_field(
     compare: bool = True,
     metadata: dict[str, Any] | None = None,
     kw_only: type[MISSING] = MISSING,
-) -> Any:
-    ...
+) -> Any: ...
 
 
 def frozen_field(
@@ -407,8 +404,7 @@ def dataclass[_T](
     slots: bool = False,
     weakref_slot: bool = False,
     classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch",
-) -> type[_T]:
-    ...
+) -> type[_T]: ...
 
 
 @overload
@@ -427,8 +423,8 @@ def dataclass[_T](
     slots: bool = False,
     weakref_slot: bool = False,
     classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch",
-) -> Callable[[type[_T]], type[_T]]:
-    ...
+) -> Callable[[type[_T]], type[_T]]: ...
+
 
 @dataclass_transform()
 def dataclass[_T](
