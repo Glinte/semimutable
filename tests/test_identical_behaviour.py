@@ -1,4 +1,6 @@
+# pyright: reportMissingParameterType = false
 import dataclasses
+from typing import override
 import weakref
 
 import pytest
@@ -22,7 +24,7 @@ def test_already_frozen_class_raises_frozen_instance_error():
     for cls in (Std, Sm):
         inst = cls(x=7)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            inst.x = 8
+            inst.x = 8  # type: ignore
 
 
 # FIXME: semimutable always handles class variables consistently regardless of slots=True, but seems like dataclasses does not.
@@ -67,14 +69,17 @@ def test_custom_metaclass_behavior_preserved():
             ns["created_by_meta"] = True
             return super().__new__(mcls, name, bases, ns)
 
+        @override
         def __getattribute__(cls, name):
             type.__setattr__(cls, "_last_attr", name)
             return super().__getattribute__(name)
 
+        @override
         def __setattr__(cls, name, value):
             type.__setattr__(cls, "_last_set", (name, value))
             return super().__setattr__(name, value)
 
+        @override
         def __call__(cls, *args, **kwargs):
             type.__setattr__(cls, "_called", True)
             return super().__call__(*args, **kwargs)
@@ -113,7 +118,7 @@ def test_slots_option():
         assert not hasattr(inst, "__dict__")
         inst.x = 2
         with pytest.raises(AttributeError):
-            inst.y = 2
+            inst.y = 2  # type: ignore
 
 
 def test_order_option():
@@ -125,7 +130,7 @@ def test_order_option():
     @semimutable.dataclass(order=True)
     class Sm:
         x: int = semimutable.frozen_field()
-        y: int
+        y: int  # pyright: ignore[reportGeneralTypeIssues]  # FIXME: Fields without default values cannot appear after fields with default values
 
     s1_std, s2_std = Std(x=1, y=2), Std(x=1, y=3)
     s1_sm, s2_sm = Sm(x=1, y=2), Sm(x=1, y=3)
@@ -160,8 +165,8 @@ def test_kw_only_option():
         y: int
 
     with pytest.raises(TypeError):
-        Std(1, 2)
+        Std(1, 2)  # type: ignore
     with pytest.raises(TypeError):
-        Sm(1, 2)
+        Sm(1, 2)  # type: ignore
     Std(x=1, y=2)
     Sm(x=1, y=2)
