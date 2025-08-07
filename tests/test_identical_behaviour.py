@@ -25,7 +25,25 @@ def test_already_frozen_class_raises_frozen_instance_error():
             inst.x = 8
 
 
-def test_class_attribute_rebinding_is_noop():
+@pytest.xfail("FIXME: semimutable always handles class variables consistently regardless of slots=True, but seems like dataclasses does not.")
+def test_class_attribute_rebinding_is_not_noop_if_slots_true():
+    @dataclasses.dataclass(slots=True)
+    class Std:
+        x: int = dataclasses.field()
+
+    @semimutable.dataclass(slots=True)
+    class Sm:
+        x: int = semimutable.frozen_field()
+
+    std = Std(x=5)
+    sm = Sm(x=5)
+    Std.x = 123
+    Sm.x = 123
+    assert std.x == sm.x == 123  # This is what dataclasses does, but semimutable does not. Instead, sm.x == 5 here.
+    assert Std.x == Sm.x == 123
+
+
+def test_class_attribute_rebinding_is_noop_if_slots_false():
     @dataclasses.dataclass(slots=True)
     class Std:
         x: int = dataclasses.field()
