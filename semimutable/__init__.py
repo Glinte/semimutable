@@ -55,7 +55,7 @@ __all__ = [
 ]
 
 # Extra items for our module.
-__all__ += ["FrozenField", "freeze_fields", "FrozenFieldPlaceholder", "FrozenFieldError"]
+__all__ += ["FrozenField", "FrozenFieldPlaceholder", "FrozenFieldError"]
 
 # Note: This prefix CANNOT be dunder, because we used dynamic class creation it would cause name mangling issues.
 FROZEN_PREFIX: Final = "_frozen_"
@@ -201,7 +201,7 @@ def field(
     )
 
 
-def freeze_fields[T](
+def _freeze_fields[T](
     cls: type[T], *, classvar_frozen_assignment: Literal["patch", "replace", "error"] = "patch"
 ) -> type[T]:
     """
@@ -212,16 +212,12 @@ def freeze_fields[T](
     Args:
         cls: The class to make immutable, must be a dataclass.
         classvar_frozen_assignment: The behaviour of frozen fields when you try to assign to the same name in the class body.
-            - "patch" will transparently assign/fetch the class variable to/from a hidden variable, making it behave
-                exactly like a normal class variable at the cost of a small(?) performance penalty every time you access
-                any class variable (This includes accessing any methods, as they are class variables too).
-            - "replace" will replace the FrozenField descriptor with a normal class variable, allowing you to assign to it.
-            - "error" will raise an error if you try to assign to a frozen field in the class body. This has the same
-                performance penalty as "patch", but it will not allow you to assign to the field in the class body. This
-                is useful for ensuring that you do not accidentally mutate the class variable, before switching to "replace".
-                Otherwise, it is recommended to use "patch" or "replace" instead.
+
     Raises:
         TypeError: If cls is not a dataclass
+
+    See Also:
+        - `semimutable.dataclass`: Elaborates on what classvar_frozen_assignment does.
     """
 
     cls_fields = getattr(cls, "__dataclass_fields__", None)
@@ -497,7 +493,7 @@ def dataclass[_T](
             slots=slots,
             weakref_slot=weakref_slot,
         )(cls)
-        return freeze_fields(klass, classvar_frozen_assignment=classvar_frozen_assignment)
+        return _freeze_fields(klass, classvar_frozen_assignment=classvar_frozen_assignment)
 
     # See if we're being called as @dataclass or @dataclass().
     if cls is None:
