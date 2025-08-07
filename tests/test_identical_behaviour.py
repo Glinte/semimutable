@@ -83,17 +83,18 @@ def test_custom_metaclass_behavior_preserved():
 def test_slots_option():
     @dataclasses.dataclass(slots=True)
     class Std:
-        x: int = dataclasses.field()
+        x: int
 
     @semimutable.dataclass(slots=True)
     class Sm:
-        x: int = semimutable.frozen_field()
+        x: int
 
     for cls in (Std, Sm):
         inst = cls(x=1)
         assert not hasattr(inst, "__dict__")
-        with pytest.raises(TypeError):
-            inst.x = 2
+        inst.x = 2
+        with pytest.raises(AttributeError):
+            inst.y = 2
 
 
 def test_order_option():
