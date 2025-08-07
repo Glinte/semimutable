@@ -274,7 +274,7 @@ def freeze_fields[T](
                 return orig_meta_setattr(cls, name, value)
 
         else:
-            assert False
+            raise ValueError(f"Invalid classvar_frozen_assignment value: {classvar_frozen_assignment!r}")
 
         # Create a new metaclass that overrides __getattribute__ to allow setting class variables on frozen fields descriptors
         # We cannot just set metacls.__getattribute__ because it would override the original __getattribute__ of the class,
