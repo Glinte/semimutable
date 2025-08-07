@@ -59,6 +59,13 @@ __all__ += ["frozen_field", "FrozenField", "freeze_fields", "FrozenFieldPlacehol
 FROZEN_PREFIX: Final = "_frozen_"
 
 
+class FrozenFieldError(TypeError):
+    """Raised when trying to mutate a frozen field."""
+
+    def __init__(self, field_name: str) -> None:
+        super().__init__(f"Cannot modify frozen field '{field_name}'.")
+
+
 class FrozenField[T]:
     """A descriptor that makes an attribute immutable after it has been set."""
 
@@ -246,8 +253,32 @@ def freeze_fields[T](
                     # If the class does not have __frozen_dataclass_descriptors__, we can just set on the original attribute
                     pass
                 return orig_meta_setattr(cls, name, value)
+
         elif classvar_frozen_assignment == "error":
-            pass
+
+            def meta_getattribute(cls: type[T], name: str) -> Any:
+                try:
+                    descriptor_vars = orig_meta_getattribute(cls, "__frozen_dataclass_descriptors__")
+                    if name in descriptor_vars:
+                        raise FrozenFieldError(name)
+                except AttributeError:
+                    # If the class does not have __frozen_dataclass_descriptors__, we can just return the original attribute
+                    pass
+                return orig_meta_getattribute(cls, name)
+
+            def meta_setattr(cls: type[T], name: str, value: Any) -> None:
+                # If the name is a frozen field, we need to set it on another attribute
+                try:
+                    descriptor_vars = orig_meta_getattribute(cls, "__frozen_dataclass_descriptors__")
+                    if name in descriptor_vars:
+                        raise FrozenFieldError(name)
+                except AttributeError:
+                    # If the class does not have __frozen_dataclass_descriptors__, we can just set on the original attribute
+                    pass
+                return orig_meta_setattr(cls, name, value)
+
+        else:
+            assert False
 
         # Create a new metaclass that overrides __getattribute__ to allow setting class variables on frozen fields descriptors
         # We cannot just set metacls.__getattribute__ because it would override the original __getattribute__ of the class,
