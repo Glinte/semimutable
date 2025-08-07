@@ -1,7 +1,7 @@
 # pyright: reportMissingParameterType = false
 import dataclasses
-from typing import override
 import weakref
+from typing import override
 
 import pytest
 

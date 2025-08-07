@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     def _get_slots(cls: type) -> Generator[str, None, None]:
         raise RuntimeError
 else:
-    from dataclasses import _get_slots, _MISSING_TYPE
+    from dataclasses import _MISSING_TYPE, _get_slots
 
 __version__ = "0.1.0a0"
 
