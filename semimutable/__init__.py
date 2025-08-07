@@ -53,7 +53,7 @@ __all__ = [
 ]
 
 # Extra items for our module.
-__all__ += ["frozen_field", "FrozenField", "freeze_fields", "FrozenFieldPlaceholder"]
+__all__ += ["frozen_field", "FrozenField", "freeze_fields", "FrozenFieldPlaceholder", "FrozenFieldError"]
 
 # Note: This prefix CANNOT be dunder, because we used dynamic class creation it would cause name mangling issues.
 FROZEN_PREFIX: Final = "_frozen_"
