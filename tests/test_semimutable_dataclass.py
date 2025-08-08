@@ -3,6 +3,7 @@ import dataclasses
 import pytest
 
 from semimutable import FrozenFieldError, dataclass, field
+from semimutable import FROZEN_PREFIX
 
 
 def test_frozen_field_is_immutable():
@@ -61,3 +62,15 @@ def test_classvar_assignment_error_raises():
 
     with pytest.raises(FrozenFieldError):
         Sm.x = 10
+
+
+def test_vars_lists_public_field_names_only():
+    @dataclass(slots=False)
+    class Sm:
+        x: int = field(frozen=True)
+        y: int = 0
+
+    sm = Sm(x=1, y=2)
+    d = vars(sm)
+    assert d == {"x": 1, "y": 2}
+    assert FROZEN_PREFIX + "x" not in d
