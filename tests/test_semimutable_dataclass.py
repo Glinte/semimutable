@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from semimutable import FrozenFieldError, dataclass, field
+from semimutable import FrozenFieldError, InitVar, dataclass, field
 
 
 def test_frozen_field_is_immutable():
@@ -61,3 +61,16 @@ def test_classvar_assignment_error_raises():
 
     with pytest.raises(FrozenFieldError):
         Sm.x = 10
+
+
+def test_frozen_initvar_field_not_descriptor():
+    @dataclass
+    class Sm:
+        x: InitVar[int] = field(frozen=True)
+
+    sm = Sm(x=1)
+
+    with pytest.raises(AttributeError):
+        sm.x
+
+    assert "x" not in Sm.__dict__

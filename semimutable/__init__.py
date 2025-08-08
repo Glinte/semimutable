@@ -27,12 +27,13 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     _MISSING_TYPE = Never
+    _FIELD_INITVAR: object
 
     # The type hints should match the actual implementation.
     def _get_slots(cls: type) -> Generator[str, None, None]:
         raise RuntimeError
 else:
-    from dataclasses import _MISSING_TYPE, _get_slots
+    from dataclasses import _FIELD_INITVAR, _MISSING_TYPE, _get_slots
 
 __version__ = "0.2.0"
 
@@ -375,6 +376,8 @@ def _freeze_fields[T](
     # Now we can iterate over the fields and replace the frozen fields (those with "frozen" in their metadata, as set by field(frozen=True))
     # with FrozenField descriptors.
     for f in fields(cls):  # pyright: ignore[reportArgumentType]  # cls must be a dataclass
+        if f._field_type is _FIELD_INITVAR:
+            continue
         if "frozen" in f.metadata:
             setattr(new_cls, f.name, FrozenField(f.name))
             descriptor_vars.add(f.name)
