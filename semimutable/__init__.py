@@ -94,6 +94,17 @@ class FrozenField[T]:
 
         setattr(instance, self._private_name, value)
 
+    def __delete__(self, instance: object) -> None:
+        try:
+            delattr(instance, self._private_name)
+        except AttributeError:
+            pass
+        public_name = self._private_name[len(FROZEN_PREFIX) :]
+        try:
+            instance.__dict__.pop(public_name, None)
+        except AttributeError:
+            pass
+
 
 error = RuntimeError(
     "This field is created via field(frozen=True) but the @semimutable.dataclass decorator is not used on the dataclass. "

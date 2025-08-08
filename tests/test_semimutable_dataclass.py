@@ -27,6 +27,17 @@ def test_non_frozen_field_is_mutable():
     sm.y = 42
 
 
+def test_frozen_field_can_be_deleted():
+    @dataclass(slots=True)
+    class Sm:
+        x: int = field(frozen=True)
+
+    sm = Sm(x=1)
+    del sm.x
+    with pytest.raises(AttributeError):
+        sm.x
+
+
 def test_plain_dataclass_is_refused():
     with pytest.raises(RuntimeError):
 
