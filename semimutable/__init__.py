@@ -85,13 +85,25 @@ class FrozenField[T]:
     def __get__(self, instance: object | None, owner: type[object] | None = None) -> T | Self:
         if instance is None:
             return self
-        value = getattr(instance, self._private_name)
-        return value
+        public_name = self._private_name[len(FROZEN_PREFIX) :]
+        try:
+            dct = instance.__dict__  # type: ignore[attr-defined]
+        except Exception:
+            dct = None
+        if dct is not None and public_name in dct:
+            return dct[public_name]
+        return getattr(instance, self._private_name)
 
     def __set__(self, instance: object, value: T) -> None:
+        public_name = self._private_name[len(FROZEN_PREFIX) :]
         if hasattr(instance, self._private_name):
-            raise FrozenFieldError(self._private_name[len(FROZEN_PREFIX) :]) from None
-
+            raise FrozenFieldError(public_name) from None
+        try:
+            dct = instance.__dict__  # type: ignore[attr-defined]
+        except Exception:
+            dct = None
+        if dct is not None:
+            dct[public_name] = value
         setattr(instance, self._private_name, value)
 
 
@@ -327,39 +339,32 @@ def _freeze_fields[T](
             needs_new_class = True
 
         cls_dict = dict(cls.__dict__)
-        # This if block is mostly copied from dataclasses._process_class, but with extra handling for frozen fields.
-        # Copyright (c) 2001-2025 Python Software Foundation; All Rights Reserved
+        field_names = tuple(f.name for f in fields(cls))  # pyright: ignore[reportArgumentType]
+        # This block is mostly copied from dataclasses._process_class, with extra handling for frozen fields.
         if "__slots__" in cls.__dict__:
             needs_new_class = True
-            field_names = tuple(f.name for f in fields(cls))  # pyright: ignore[reportArgumentType]  # cls must be a dataclass
-            # Make sure slots don't overlap with those in base classes.
             inherited_slots = set(itertools.chain.from_iterable(map(_get_slots, cls.__mro__[1:-1])))
-            # The slots for our class.  Remove slots from our base classes.  Add
-            # '__weakref__' if weakref_slot was given, unless it is already present.
             cls_dict["__slots__"] = tuple(
                 itertools.filterfalse(
                     inherited_slots.__contains__,
                     itertools.chain(
-                        # gh-93521: '__weakref__' also needs to be filtered out if
-                        # already present in inherited_slots
                         field_names,
                         ("__weakref__",) if params.weakref_slot else (),
                     ),
                 ),
             )
-
-            # Add our frozen fields to the slots, so they can be used by descriptors.
             cls_dict["__slots__"] += tuple(FROZEN_PREFIX + field_name for field_name in field_names)
-
             for field_name in field_names:
-                # Remove our attributes, if present. They'll still be available in _MARKER.
                 cls_dict.pop(field_name, None)
-
-            # Remove __dict__ itself.
             cls_dict.pop("__dict__", None)
-
-            # Clear existing `__weakref__` descriptor, it belongs to a previous type:
             cls_dict.pop("__weakref__", None)  # gh-102069
+        else:
+            needs_new_class = True
+            cls_dict["__slots__"] = tuple(FROZEN_PREFIX + field_name for field_name in field_names) + ("__dict__",)
+            for field_name in field_names:
+                cls_dict.pop(field_name, None)
+            cls_dict.pop("__dict__", None)
+            cls_dict.pop("__weakref__", None)
         # End of copied block from dataclasses._process_class
 
         if needs_new_class:
